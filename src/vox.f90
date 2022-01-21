@@ -23,6 +23,7 @@ module vox_mod
 contains
 
     subroutine read_vox(this, filename)
+    ! read vox file
 
         implicit none
 
@@ -34,15 +35,19 @@ contains
         logical :: flag
 
         open(newunit=u, file=filename, access="stream", status="OLD", form="unformatted")
+        !read header
         call read_magic(u, offset, flag)
         this%extended = flag
 
+        !if custom format (160) then set gsize to 4
         gsize = 1
         if(flag)gsize = 4
 
+        !read main chunk
         call chunk%read(u, offset)
         if(chunk%chunk_id /= "MAIN")error stop "No MAIN chunk!"
 
+        !read pack chunk
         call chunk%read(u, offset)
         if(chunk%chunk_id == "PACK")then
             call read_nbytes(u, 4, offset, bytes) 
@@ -52,6 +57,7 @@ contains
             this%nmodels = 1
         end if
 
+        !read models
         do i = 1, this%nmodels
             if(chunk%chunk_id == "SIZE")then
                 call read_nbytes(u, 4, offset, bytes)
@@ -64,7 +70,6 @@ contains
                 this%zsize = transfer(bytes, z)
                 allocate(this%grid(0:this%xsize-1, 0:this%ysize-1, 0:this%zsize-1))
                 this%grid = 0
-                print*,this%xsize,this%ysize,this%zsize
             else
                 error stop "Missing SIZE chunk!"
             end if
@@ -94,7 +99,7 @@ contains
                         z = ichar(bytes)
                     end if
                     call read_nbytes(u, 1, offset, bytes)
-                    ! print*,x,y,z, ichar(bytes)
+                    !transfer data to voxel grid
                     this%grid(x, y, z) = ichar(bytes)
                 end do
             else
@@ -105,7 +110,9 @@ contains
 
 
     subroutine read_magic(u, offset, flag)
-        
+    !read vox header
+    !expected "VOX "
+    !then file version. should be 150 or 160
         implicit none
     
         integer, intent(IN)  :: u
