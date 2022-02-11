@@ -68,7 +68,7 @@ contains
 
                 call read_nbytes(u, 4, offset, bytes)
                 this%zsize = transfer(bytes, z)
-                allocate(this%grid(0:this%xsize-1, 0:this%ysize-1, 0:this%zsize-1))
+                allocate(this%grid(this%xsize, this%ysize, this%zsize))
                 this%grid = 0
             else
                 error stop "Missing SIZE chunk!"
@@ -100,7 +100,7 @@ contains
                     end if
                     call read_nbytes(u, 1, offset, bytes)
                     !transfer data to voxel grid
-                    this%grid(x, y, z) = ichar(bytes)
+                    this%grid(x+1, y+1, z+1) = ichar(bytes)
                 end do
             else
                 error stop "Missing XYZI chunk!"
